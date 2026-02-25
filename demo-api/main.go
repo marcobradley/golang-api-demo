@@ -10,7 +10,8 @@ func main() {
 	router := gin.Default()
 	router.GET("/songs", getSongs)
 
-	router.Run("localhost:8080")
+	// bind to all addresses so the service is reachable from outside the container
+	router.Run(":8080")
 }
 
 type song struct {
