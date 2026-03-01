@@ -29,6 +29,14 @@ func songsCount() int {
 	return len(songs)
 }
 
+func songsSnapshot() []song {
+	mu.RLock()
+	defer mu.RUnlock()
+	snapshot := make([]song, len(songs))
+	copy(snapshot, songs)
+	return snapshot
+}
+
 // helper to create a test router with the same routes as main
 func setupRouter() *gin.Engine {
 	router := gin.Default()
@@ -61,14 +69,15 @@ func TestGetSongs(t *testing.T) {
 	}
 
 	// compare length first
-	if len(got) != len(songs) {
-		t.Errorf("expected %d songs but got %d", len(songs), len(got))
+	snapshot := songsSnapshot()
+	if len(got) != len(snapshot) {
+		t.Errorf("expected %d songs but got %d", len(snapshot), len(got))
 	}
 
 	// simple field check
-	for i := range songs {
-		if got[i] != songs[i] {
-			t.Errorf("song at index %d does not match\ngot: %#v\nwant: %#v", i, got[i], songs[i])
+	for i := range snapshot {
+		if got[i] != snapshot[i] {
+			t.Errorf("song at index %d does not match\ngot: %#v\nwant: %#v", i, got[i], snapshot[i])
 		}
 	}
 }
@@ -96,8 +105,9 @@ func TestGetSongByID(t *testing.T) {
 		t.Fatalf("response body not valid json: %v", err)
 	}
 
-	if got != songs[0] {
-		t.Errorf("returned song does not match\ngot: %#v\nwant: %#v", got, songs[0])
+	snapshot := songsSnapshot()
+	if got != snapshot[0] {
+		t.Errorf("returned song does not match\ngot: %#v\nwant: %#v", got, snapshot[0])
 	}
 }
 
@@ -130,12 +140,13 @@ func TestAddSong(t *testing.T) {
 		t.Errorf("created song payload mismatch: %#v", got)
 	}
 
-	if len(songs) != 4 {
-		t.Fatalf("expected 4 songs after add but got %d", len(songs))
+	if songsCount() != 4 {
+		t.Fatalf("expected 4 songs after add but got %d", songsCount())
 	}
 
-	if songs[3] != got {
-		t.Errorf("song at index %d does not match created song\ngot: %#v\nwant: %#v", 3, songs[3], got)
+	snapshot := songsSnapshot()
+	if snapshot[3] != got {
+		t.Errorf("song at index %d does not match created song\ngot: %#v\nwant: %#v", 3, snapshot[3], got)
 	}
 }
 
@@ -159,17 +170,18 @@ func TestAddSongMaintainsAscendingIDOrder(t *testing.T) {
 		t.Fatalf("expected status %d but got %d", http.StatusCreated, w.Code)
 	}
 
-	if len(songs) != 4 {
-		t.Fatalf("expected 4 songs after add but got %d", len(songs))
+	if songsCount() != 4 {
+		t.Fatalf("expected 4 songs after add but got %d", songsCount())
 	}
 
-	if songs[0].ID != "0" {
-		t.Fatalf("expected first song ID %q but got %q", "0", songs[0].ID)
+	snapshot := songsSnapshot()
+	if snapshot[0].ID != "0" {
+		t.Fatalf("expected first song ID %q but got %q", "0", snapshot[0].ID)
 	}
 
-	for i := 1; i < len(songs); i++ {
-		if songs[i-1].ID > songs[i].ID {
-			t.Fatalf("songs are not in ascending ID order at index %d: %q > %q", i, songs[i-1].ID, songs[i].ID)
+	for i := 1; i < len(snapshot); i++ {
+		if snapshot[i-1].ID > snapshot[i].ID {
+			t.Fatalf("songs are not in ascending ID order at index %d: %q > %q", i, snapshot[i-1].ID, snapshot[i].ID)
 		}
 	}
 }
@@ -207,7 +219,7 @@ func TestAddSongInvalidBody(t *testing.T) {
 	resetSongsForTest(t)
 
 	router := setupRouter()
-	originalCount := len(songs)
+	originalCount := songsCount()
 
 	body := []byte(`{"id":`)
 	req, err := http.NewRequest(http.MethodPost, "/songs", bytes.NewBuffer(body))
@@ -232,8 +244,8 @@ func TestAddSongInvalidBody(t *testing.T) {
 		t.Errorf("expected message %q but got %q", "invalid request body", got["message"])
 	}
 
-	if len(songs) != originalCount {
-		t.Errorf("songs collection changed on invalid request: got %d, want %d", len(songs), originalCount)
+	if songsCount() != originalCount {
+		t.Errorf("songs collection changed on invalid request: got %d, want %d", songsCount(), originalCount)
 	}
 }
 
