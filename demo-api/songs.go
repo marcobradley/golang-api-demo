@@ -59,7 +59,7 @@ func findSongIndexByID(list []song, id string) int {
 
 func addSong(c *gin.Context) {
 	var newSong song
-	if err := c.BindJSON(&newSong); err != nil {
+	if err := c.ShouldBindJSON(&newSong); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "invalid request body"})
 		return
 	}
