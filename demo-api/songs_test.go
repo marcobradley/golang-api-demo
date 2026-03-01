@@ -71,7 +71,7 @@ func TestGetSongs(t *testing.T) {
 	// compare length first
 	snapshot := songsSnapshot()
 	if len(got) != len(snapshot) {
-		t.Errorf("expected %d songs but got %d", len(snapshot), len(got))
+		t.Fatalf("expected %d songs but got %d", len(snapshot), len(got))
 	}
 
 	// simple field check
