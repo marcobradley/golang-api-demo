@@ -134,9 +134,43 @@ func TestAddSong(t *testing.T) {
 		t.Fatalf("expected 4 songs after add but got %d", len(songs))
 	}
 
-	last := songs[len(songs)-1]
-	if last != got {
-		t.Errorf("last song in collection does not match created song\ngot: %#v\nwant: %#v", last, got)
+	if songs[3] != got {
+		t.Errorf("song at index %d does not match created song\ngot: %#v\nwant: %#v", 3, songs[3], got)
+	}
+}
+
+func TestAddSongMaintainsAscendingIDOrder(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	resetSongsForTest(t)
+
+	router := setupRouter()
+
+	body := []byte(`{"id":"0","title":"Before All","artist":"Tester","price":0.49}`)
+	req, err := http.NewRequest(http.MethodPost, "/songs", bytes.NewBuffer(body))
+	if err != nil {
+		t.Fatalf("failed to create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusCreated {
+		t.Fatalf("expected status %d but got %d", http.StatusCreated, w.Code)
+	}
+
+	if len(songs) != 4 {
+		t.Fatalf("expected 4 songs after add but got %d", len(songs))
+	}
+
+	if songs[0].ID != "0" {
+		t.Fatalf("expected first song ID %q but got %q", "0", songs[0].ID)
+	}
+
+	for i := 1; i < len(songs); i++ {
+		if songs[i-1].ID > songs[i].ID {
+			t.Fatalf("songs are not in ascending ID order at index %d: %q > %q", i, songs[i-1].ID, songs[i].ID)
+		}
 	}
 }
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"sort"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -36,14 +37,11 @@ func getSongs(c *gin.Context) {
 func getSongByID(c *gin.Context) {
 	id := c.Param("id")
 	mu.RLock()
+	idx := findSongIndexByID(songs, id)
 	var foundSong song
-	var found bool
-	for i := range songs {
-		if songs[i].ID == id {
-			foundSong = songs[i]
-			found = true
-			break
-		}
+	found := idx < len(songs) && songs[idx].ID == id
+	if found {
+		foundSong = songs[idx]
 	}
 	mu.RUnlock()
 	if found {
@@ -51,6 +49,12 @@ func getSongByID(c *gin.Context) {
 		return
 	}
 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "song not found"})
+}
+
+func findSongIndexByID(list []song, id string) int {
+	return sort.Search(len(list), func(i int) bool {
+		return list[i].ID >= id
+	})
 }
 
 func addSong(c *gin.Context) {
@@ -64,14 +68,15 @@ func addSong(c *gin.Context) {
 		return
 	}
 	mu.Lock()
-	for _, s := range songs {
-		if s.ID == newSong.ID {
-			mu.Unlock()
-			c.IndentedJSON(http.StatusConflict, gin.H{"message": "song with this id already exists"})
-			return
-		}
+	idx := findSongIndexByID(songs, newSong.ID)
+	if idx < len(songs) && songs[idx].ID == newSong.ID {
+		mu.Unlock()
+		c.IndentedJSON(http.StatusConflict, gin.H{"message": "song with this id already exists"})
+		return
 	}
-	songs = append(songs, newSong)
+	songs = append(songs, song{})
+	copy(songs[idx+1:], songs[idx:])
+	songs[idx] = newSong
 	mu.Unlock()
 	c.IndentedJSON(http.StatusCreated, newSong)
 }
