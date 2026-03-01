@@ -40,6 +40,16 @@ func addSong(c *gin.Context) {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "invalid request body"})
 		return
 	}
+	if newSong.ID == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "id is required"})
+		return
+	}
+	for _, s := range songs {
+		if s.ID == newSong.ID {
+			c.IndentedJSON(http.StatusConflict, gin.H{"message": "song with this id already exists"})
+			return
+		}
+	}
 	songs = append(songs, newSong)
 	c.IndentedJSON(http.StatusCreated, newSong)
 }
