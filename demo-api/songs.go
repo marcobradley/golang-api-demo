@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,18 +14,27 @@ type song struct {
 	Price  float64 `json:"price"`
 }
 
-var songs = []song{
+var initialSongs = []song{
 	{ID: "1", Title: "Shape of You", Artist: "Ed Sheeran", Price: 1.29},
 	{ID: "2", Title: "Blinding Lights", Artist: "The Weeknd", Price: 1.29},
 	{ID: "3", Title: "Dance Monkey", Artist: "Tones and I", Price: 1.29},
 }
 
+var (
+	mu    sync.RWMutex
+	songs = append([]song{}, initialSongs...)
+)
+
 func getSongs(c *gin.Context) {
+	mu.RLock()
+	defer mu.RUnlock()
 	c.IndentedJSON(http.StatusOK, songs)
 }
 
 func getSongByID(c *gin.Context) {
 	id := c.Param("id")
+	mu.RLock()
+	defer mu.RUnlock()
 	for _, s := range songs {
 		if s.ID == id {
 			c.IndentedJSON(http.StatusOK, s)
@@ -44,6 +54,8 @@ func addSong(c *gin.Context) {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "id is required"})
 		return
 	}
+	mu.Lock()
+	defer mu.Unlock()
 	for _, s := range songs {
 		if s.ID == newSong.ID {
 			c.IndentedJSON(http.StatusConflict, gin.H{"message": "song with this id already exists"})

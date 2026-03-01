@@ -11,16 +11,22 @@ import (
 )
 
 func seedSongs() []song {
-	return []song{
-		{ID: "1", Title: "Shape of You", Artist: "Ed Sheeran", Price: 1.29},
-		{ID: "2", Title: "Blinding Lights", Artist: "The Weeknd", Price: 1.29},
-		{ID: "3", Title: "Dance Monkey", Artist: "Tones and I", Price: 1.29},
-	}
+	cloned := make([]song, len(initialSongs))
+	copy(cloned, initialSongs)
+	return cloned
 }
 
 func resetSongsForTest(t *testing.T) {
 	t.Helper()
+	mu.Lock()
+	defer mu.Unlock()
 	songs = seedSongs()
+}
+
+func songsCount() int {
+	mu.RLock()
+	defer mu.RUnlock()
+	return len(songs)
 }
 
 // helper to create a test router with the same routes as main
@@ -194,5 +200,75 @@ func TestAddSongInvalidBody(t *testing.T) {
 
 	if len(songs) != originalCount {
 		t.Errorf("songs collection changed on invalid request: got %d, want %d", len(songs), originalCount)
+	}
+}
+
+func TestAddSongMissingID(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	resetSongsForTest(t)
+
+	router := setupRouter()
+	originalCount := songsCount()
+
+	body := []byte(`{"title":"No ID Song","artist":"Unknown","price":0.99}`)
+	req, err := http.NewRequest(http.MethodPost, "/songs", bytes.NewBuffer(body))
+	if err != nil {
+		t.Fatalf("failed to create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d but got %d", http.StatusBadRequest, w.Code)
+	}
+
+	var got map[string]string
+	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+		t.Fatalf("response body not valid json: %v", err)
+	}
+
+	if got["message"] != "id is required" {
+		t.Errorf("expected message %q but got %q", "id is required", got["message"])
+	}
+
+	if songsCount() != originalCount {
+		t.Errorf("songs collection changed on missing id: got %d, want %d", songsCount(), originalCount)
+	}
+}
+
+func TestAddSongDuplicateID(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	resetSongsForTest(t)
+
+	router := setupRouter()
+	originalCount := songsCount()
+
+	body := []byte(`{"id":"1","title":"Duplicate","artist":"Someone","price":0.99}`)
+	req, err := http.NewRequest(http.MethodPost, "/songs", bytes.NewBuffer(body))
+	if err != nil {
+		t.Fatalf("failed to create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusConflict {
+		t.Fatalf("expected status %d but got %d", http.StatusConflict, w.Code)
+	}
+
+	var got map[string]string
+	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+		t.Fatalf("response body not valid json: %v", err)
+	}
+
+	if got["message"] != "song with this id already exists" {
+		t.Errorf("expected message %q but got %q", "song with this id already exists", got["message"])
+	}
+
+	if songsCount() != originalCount {
+		t.Errorf("songs collection changed on duplicate id: got %d, want %d", songsCount(), originalCount)
 	}
 }
