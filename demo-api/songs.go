@@ -27,19 +27,27 @@ var (
 
 func getSongs(c *gin.Context) {
 	mu.RLock()
-	defer mu.RUnlock()
-	c.IndentedJSON(http.StatusOK, songs)
+	snapshot := make([]song, len(songs))
+	copy(snapshot, songs)
+	mu.RUnlock()
+	c.IndentedJSON(http.StatusOK, snapshot)
 }
 
 func getSongByID(c *gin.Context) {
 	id := c.Param("id")
 	mu.RLock()
-	defer mu.RUnlock()
-	for _, s := range songs {
-		if s.ID == id {
-			c.IndentedJSON(http.StatusOK, s)
-			return
+	var found *song
+	for i := range songs {
+		if songs[i].ID == id {
+			foundSong := songs[i]
+			found = &foundSong
+			break
 		}
+	}
+	mu.RUnlock()
+	if found != nil {
+		c.IndentedJSON(http.StatusOK, *found)
+		return
 	}
 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "song not found"})
 }
@@ -55,13 +63,14 @@ func addSong(c *gin.Context) {
 		return
 	}
 	mu.Lock()
-	defer mu.Unlock()
 	for _, s := range songs {
 		if s.ID == newSong.ID {
+			mu.Unlock()
 			c.IndentedJSON(http.StatusConflict, gin.H{"message": "song with this id already exists"})
 			return
 		}
 	}
 	songs = append(songs, newSong)
+	mu.Unlock()
 	c.IndentedJSON(http.StatusCreated, newSong)
 }
