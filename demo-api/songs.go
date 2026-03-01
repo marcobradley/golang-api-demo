@@ -36,17 +36,18 @@ func getSongs(c *gin.Context) {
 func getSongByID(c *gin.Context) {
 	id := c.Param("id")
 	mu.RLock()
-	var found *song
+	var foundSong song
+	var found bool
 	for i := range songs {
 		if songs[i].ID == id {
-			foundSong := songs[i]
-			found = &foundSong
+			foundSong = songs[i]
+			found = true
 			break
 		}
 	}
 	mu.RUnlock()
-	if found != nil {
-		c.IndentedJSON(http.StatusOK, *found)
+	if found {
+		c.IndentedJSON(http.StatusOK, foundSong)
 		return
 	}
 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "song not found"})
