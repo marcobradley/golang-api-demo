@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -117,7 +118,7 @@ func TestAddSong(t *testing.T) {
 
 	router := setupRouter()
 
-	body := []byte(`{"id":"4","title":"Levitating","artist":"Dua Lipa","price":1.49}`)
+	body := []byte(`{"title":"Levitating","artist":"Dua Lipa","price":1.49}`)
 	req, err := http.NewRequest(http.MethodPost, "/songs", bytes.NewBuffer(body))
 	if err != nil {
 		t.Fatalf("failed to create request: %v", err)
@@ -156,7 +157,7 @@ func TestAddSongMaintainsAscendingIDOrder(t *testing.T) {
 
 	router := setupRouter()
 
-	body := []byte(`{"id":"0","title":"Before All","artist":"Tester","price":0.49}`)
+	body := []byte(`{"title":"Before All","artist":"Tester","price":0.49}`)
 	req, err := http.NewRequest(http.MethodPost, "/songs", bytes.NewBuffer(body))
 	if err != nil {
 		t.Fatalf("failed to create request: %v", err)
@@ -175,8 +176,8 @@ func TestAddSongMaintainsAscendingIDOrder(t *testing.T) {
 	}
 
 	snapshot := songsSnapshot()
-	if snapshot[0].ID != "0" {
-		t.Fatalf("expected first song ID %q but got %q", "0", snapshot[0].ID)
+	if snapshot[3].ID != "4" {
+		t.Fatalf("expected new song ID %q but got %q", "4", snapshot[3].ID)
 	}
 
 	for i := 1; i < len(snapshot); i++ {
@@ -254,8 +255,6 @@ func TestAddSongMissingID(t *testing.T) {
 	resetSongsForTest(t)
 
 	router := setupRouter()
-	originalCount := songsCount()
-
 	body := []byte(`{"title":"No ID Song","artist":"Unknown","price":0.99}`)
 	req, err := http.NewRequest(http.MethodPost, "/songs", bytes.NewBuffer(body))
 	if err != nil {
@@ -266,30 +265,29 @@ func TestAddSongMissingID(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected status %d but got %d", http.StatusBadRequest, w.Code)
+	if w.Code != http.StatusCreated {
+		t.Fatalf("expected status %d but got %d", http.StatusCreated, w.Code)
 	}
 
-	var got map[string]string
+	var got song
 	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
 		t.Fatalf("response body not valid json: %v", err)
 	}
 
-	if got["message"] != "id is required" {
-		t.Errorf("expected message %q but got %q", "id is required", got["message"])
+	if got.ID != "4" {
+		t.Errorf("expected generated id %q but got %q", "4", got.ID)
 	}
 
-	if songsCount() != originalCount {
-		t.Errorf("songs collection changed on missing id: got %d, want %d", songsCount(), originalCount)
+	if songsCount() != 4 {
+		t.Errorf("expected songs collection size %d, got %d", 4, songsCount())
 	}
 }
 
-func TestAddSongDuplicateID(t *testing.T) {
+func TestAddSongIgnoresProvidedID(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	resetSongsForTest(t)
 
 	router := setupRouter()
-	originalCount := songsCount()
 
 	body := []byte(`{"id":"1","title":"Duplicate","artist":"Someone","price":0.99}`)
 	req, err := http.NewRequest(http.MethodPost, "/songs", bytes.NewBuffer(body))
@@ -301,20 +299,70 @@ func TestAddSongDuplicateID(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	if w.Code != http.StatusConflict {
-		t.Fatalf("expected status %d but got %d", http.StatusConflict, w.Code)
+	if w.Code != http.StatusCreated {
+		t.Fatalf("expected status %d but got %d", http.StatusCreated, w.Code)
 	}
 
-	var got map[string]string
+	var got song
 	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
 		t.Fatalf("response body not valid json: %v", err)
 	}
 
-	if got["message"] != "song with this id already exists" {
-		t.Errorf("expected message %q but got %q", "song with this id already exists", got["message"])
+	if got.ID != "4" {
+		t.Errorf("expected generated id %q but got %q", "4", got.ID)
 	}
 
-	if songsCount() != originalCount {
-		t.Errorf("songs collection changed on duplicate id: got %d, want %d", songsCount(), originalCount)
+	if songsCount() != 4 {
+		t.Errorf("expected songs collection size %d, got %d", 4, songsCount())
+	}
+}
+
+func TestFindSongIndexByIDUsesNumericOrdering(t *testing.T) {
+	list := []song{{ID: "1"}, {ID: "2"}, {ID: "10"}}
+
+	if got := findSongIndexByID(list, "9"); got != 2 {
+		t.Fatalf("expected index %d for id %q, got %d", 2, "9", got)
+	}
+
+	if got := findSongIndexByID(list, "10"); got != 2 {
+		t.Fatalf("expected index %d for id %q, got %d", 2, "10", got)
+	}
+}
+
+func TestAddSongMaintainsNumericOrderBeyondSingleDigits(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	resetSongsForTest(t)
+
+	router := setupRouter()
+
+	for i := 0; i < 10; i++ {
+		body := []byte(`{"title":"Bulk","artist":"Tester","price":0.99}`)
+		req, err := http.NewRequest(http.MethodPost, "/songs", bytes.NewBuffer(body))
+		if err != nil {
+			t.Fatalf("failed to create request: %v", err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusCreated {
+			t.Fatalf("expected status %d but got %d", http.StatusCreated, w.Code)
+		}
+	}
+
+	snapshot := songsSnapshot()
+	for i := 1; i < len(snapshot); i++ {
+		prev, err := strconv.Atoi(snapshot[i-1].ID)
+		if err != nil {
+			t.Fatalf("failed to parse previous song id %q: %v", snapshot[i-1].ID, err)
+		}
+		curr, err := strconv.Atoi(snapshot[i].ID)
+		if err != nil {
+			t.Fatalf("failed to parse current song id %q: %v", snapshot[i].ID, err)
+		}
+		if prev > curr {
+			t.Fatalf("songs are not in ascending numeric ID order at index %d: %d > %d", i, prev, curr)
+		}
 	}
 }
