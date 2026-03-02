@@ -98,7 +98,7 @@ func TestQuicksortEndpointInvalidJSON(t *testing.T) {
 		t.Fatalf("response body not valid json: %v", err)
 	}
 
-	if got["error"] == "" {
-		t.Errorf("expected non-empty error message in response")
+	if got["message"] == "" {
+		t.Errorf("expected non-empty message in response")
 	}
 }

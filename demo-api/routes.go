@@ -1,6 +1,10 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
 
 func registerRoutes(router *gin.Engine) {
 	router.GET("/songs", getSongs)
@@ -12,10 +16,10 @@ func registerRoutes(router *gin.Engine) {
 			Array []int `json:"array"`
 		}
 		if err := c.ShouldBindJSON(&input); err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+			c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "invalid request body"})
 			return
 		}
 		sorted := sortArray(input.Array)
-		c.JSON(200, gin.H{"sorted": sorted})
+		c.IndentedJSON(http.StatusOK, gin.H{"sorted": sorted})
 	})
 }
