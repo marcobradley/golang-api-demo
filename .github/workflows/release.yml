@@ -21,6 +21,78 @@ jobs:
           persist-credentials: false # Recommended for protected branches
 
       - name: Semantic Release
+        id: semantic
         uses: cycjimmy/semantic-release-action@v4 # Use the specific action
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Derive Docker version tags
+        id: docker_tags
+        if: steps.semantic.outputs.new_release_published == 'true'
+        run: |
+          VERSION="${{ steps.semantic.outputs.new_release_version }}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          echo "major=$MAJOR" >> "$GITHUB_OUTPUT"
+          echo "minor=$MINOR" >> "$GITHUB_OUTPUT"
+          echo "patch=$PATCH" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push Docker image
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/golang-api-demo:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/golang-api-demo:v${{ steps.semantic.outputs.new_release_version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/golang-api-demo:v${{ steps.docker_tags.outputs.major }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/golang-api-demo:v${{ steps.docker_tags.outputs.major }}.${{ steps.docker_tags.outputs.minor }}
+
+  changelog-pr:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Update CHANGELOG.md
+        run: >-
+          npx conventional-changelog-cli@5.0.0 -p conventionalcommits
+          -i CHANGELOG.md -s -r 0
+
+      - name: Create pull request for changelog
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GIT_ACTIONS_TOKEN }}
+          commit-message: 'chore(changelog): update CHANGELOG.md'
+          title: 'chore(changelog): update CHANGELOG.md'
+          body: |
+            Automated changelog refresh after release.
+          branch: chore/update-changelog
+          base: main
+          add-paths: |
+            CHANGELOG.md
+          labels: |
+            documentation
