@@ -1,5 +1,5 @@
 {
-  "name": "csharp-api-demo",
+  "name": "golang-api-demo",
   "private": true,
   "version": "0.0.0-development",
   "description": "Release metadata for semantic-release GitHub Action",
