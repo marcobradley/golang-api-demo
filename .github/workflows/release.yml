@@ -20,6 +20,14 @@ jobs:
           fetch-depth: 0 
           persist-credentials: false # Recommended for protected branches
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install semantic-release preset
+        run: npm install --no-save conventional-changelog-conventionalcommits
+
       - name: Semantic Release
         id: semantic
         uses: cycjimmy/semantic-release-action@v4 # Use the specific action
