@@ -5,6 +5,8 @@
   "description": "Release metadata for semantic-release GitHub Action",
   "license": "MIT",
   "scripts": {
+    "test": "cd demo-api; go test ./...",
+    "test:verbose": "cd demo-api; go test -v ./...",
     "release": "semantic-release"
   },
   "devDependencies": {
