@@ -1,10 +1,18 @@
 {
-  "name": "k8s-docker-demo",
-  "version": "0.0.0-development",
+  "name": "csharp-api-demo",
   "private": true,
+  "version": "0.0.0-development",
+  "description": "Release metadata for semantic-release GitHub Action",
+  "license": "MIT",
   "scripts": {
-    "test": "cd demo-api; go test ./...",
-    "test:verbose": "cd demo-api; go test -v ./..."
+    "release": "semantic-release"
+  },
+  "devDependencies": {
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/github": "^11.0.6",
+    "@semantic-release/release-notes-generator": "^14.1.0",
+    "conventional-changelog-conventionalcommits": "^8.0.0",
+    "semantic-release": "^24.2.3"
   },
   "release": {
     "branches": ["main"],
