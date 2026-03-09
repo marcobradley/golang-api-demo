@@ -1,8 +1,10 @@
 package main
 
 import (
+	"math"
 	"net/http"
 	"sort"
+	"strconv"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -52,9 +54,36 @@ func getSongByID(c *gin.Context) {
 }
 
 func findSongIndexByID(list []song, id string) int {
+	targetID, err := strconv.Atoi(id)
+	if err != nil {
+		return len(list)
+	}
+
 	return sort.Search(len(list), func(i int) bool {
-		return list[i].ID >= id
+		return numericSongIDValue(list[i].ID) >= targetID
 	})
+}
+
+func numericSongIDValue(id string) int {
+	parsedID, err := strconv.Atoi(id)
+	if err != nil {
+		return math.MaxInt
+	}
+	return parsedID
+}
+
+func nextSongID(list []song) string {
+	maxID := 0
+	for _, currentSong := range list {
+		parsedID, err := strconv.Atoi(currentSong.ID)
+		if err != nil {
+			continue
+		}
+		if parsedID > maxID {
+			maxID = parsedID
+		}
+	}
+	return strconv.Itoa(maxID + 1)
 }
 
 func addSong(c *gin.Context) {
@@ -63,17 +92,9 @@ func addSong(c *gin.Context) {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "invalid request body"})
 		return
 	}
-	if newSong.ID == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "id is required"})
-		return
-	}
 	mu.Lock()
+	newSong.ID = nextSongID(songs)
 	idx := findSongIndexByID(songs, newSong.ID)
-	if idx < len(songs) && songs[idx].ID == newSong.ID {
-		mu.Unlock()
-		c.IndentedJSON(http.StatusConflict, gin.H{"message": "song with this id already exists"})
-		return
-	}
 	songs = append(songs, song{})
 	copy(songs[idx+1:], songs[idx:])
 	songs[idx] = newSong
