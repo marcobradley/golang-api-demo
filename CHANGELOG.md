@@ -1,4 +1,4 @@
-## [0.0.0-development](https://github.com/marcobradley/golang-api-demo/compare/v2.0.1...v0.0.0-development) (2026-03-17)
+## [0.0.0-development](https://github.com/marcobradley/golang-api-demo/compare/v2.0.2...v0.0.0-development) (2026-03-17)
 
 ### ⚠ BREAKING CHANGES
 
@@ -23,6 +23,7 @@
 * broken release.yml ([b20fd40](https://github.com/marcobradley/golang-api-demo/commit/b20fd404c1b185c27920ef3a84012b3b1df90551))
 * bump to fix package.json for release.yaml ([e480843](https://github.com/marcobradley/golang-api-demo/commit/e48084365ec4da2c56fb3c83c02d66cbe7e618ed))
 * correcting release.yml ([59aaaa1](https://github.com/marcobradley/golang-api-demo/commit/59aaaa1c6684b878a9ede8adfe00f5a27e3f4dc1))
+* creating a user and group to run the api as a nonroot user ([8a616f5](https://github.com/marcobradley/golang-api-demo/commit/8a616f57734694ac49065760ffd8cf37ae74fd4f))
 * fixing release.yml ([b820cea](https://github.com/marcobradley/golang-api-demo/commit/b820cea666b68a9a7d01ff5d44aafa22c0fb42b3))
 * json fix ([0ff2774](https://github.com/marcobradley/golang-api-demo/commit/0ff2774997e15677a2b2fda30f2df5b3494abd8f))
 * name fix ([1d195b7](https://github.com/marcobradley/golang-api-demo/commit/1d195b7d6fc33d6d81908bd43539e774e283ef42))
