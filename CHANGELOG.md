@@ -1,4 +1,4 @@
-## [0.0.0-development](https://github.com/marcobradley/golang-api-demo/compare/v2.0.0...v0.0.0-development) (2026-03-09)
+## [0.0.0-development](https://github.com/marcobradley/golang-api-demo/compare/v2.0.1...v0.0.0-development) (2026-03-17)
 
 ### ⚠ BREAKING CHANGES
 
@@ -26,6 +26,7 @@
 * fixing release.yml ([b820cea](https://github.com/marcobradley/golang-api-demo/commit/b820cea666b68a9a7d01ff5d44aafa22c0fb42b3))
 * json fix ([0ff2774](https://github.com/marcobradley/golang-api-demo/commit/0ff2774997e15677a2b2fda30f2df5b3494abd8f))
 * name fix ([1d195b7](https://github.com/marcobradley/golang-api-demo/commit/1d195b7d6fc33d6d81908bd43539e774e283ef42))
+* security patch to fix CVEs: ([7fff239](https://github.com/marcobradley/golang-api-demo/commit/7fff2391d7f6b21b67526aab2133912c9b70f7e0))
 * Update .github/workflows/release.yml ([855f377](https://github.com/marcobradley/golang-api-demo/commit/855f3778bff994b705a53aa0a228f2eda300c905))
 * update router to allow all traffic 8080 routes ([eb3502b](https://github.com/marcobradley/golang-api-demo/commit/eb3502b2c5f7568993093d3abbbcdf483eb059fa))
 * updated to remediate CVE-2026-27141 ([8a80b4c](https://github.com/marcobradley/golang-api-demo/commit/8a80b4cc1f1b34fac1c3efd2b3d655ed5d52b1b4))
