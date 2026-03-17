@@ -1,6 +1,7 @@
 module api
 
-go 1.26.1
+go 1.26
+toolchain go1.26.1
 
 require github.com/gin-gonic/gin v1.11.0
 
