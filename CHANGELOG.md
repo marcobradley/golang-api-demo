@@ -1,4 +1,4 @@
-## [0.0.0-development](https://github.com/marcobradley/golang-api-demo/compare/v2.0.2...v0.0.0-development) (2026-03-17)
+## [0.0.0-development](https://github.com/marcobradley/golang-api-demo/compare/v2.0.3...v0.0.0-development) (2026-03-17)
 
 ### ⚠ BREAKING CHANGES
 
@@ -19,9 +19,12 @@
 
 * Add permissions for GitHub Actions workflow ([3d73d37](https://github.com/marcobradley/golang-api-demo/commit/3d73d37ecc0b6ebec01d7b12ca53e696b1a1f9ef))
 * added findSongIndexByID to use a binary search with gettings songs or adding ([e1c8051](https://github.com/marcobradley/golang-api-demo/commit/e1c8051d2f481ac962775dedb1ec9080b78b5f4a))
+* adding explicit mkdir for case where the path doesn't exist before PW is created ([bc414b0](https://github.com/marcobradley/golang-api-demo/commit/bc414b05a05e6ec77ab1209c3a80ef2cd9ecd881))
 * adding scripts ([95d824a](https://github.com/marcobradley/golang-api-demo/commit/95d824acbcc47ec421739399e788f6e334580631))
 * broken release.yml ([b20fd40](https://github.com/marcobradley/golang-api-demo/commit/b20fd404c1b185c27920ef3a84012b3b1df90551))
 * bump to fix package.json for release.yaml ([e480843](https://github.com/marcobradley/golang-api-demo/commit/e48084365ec4da2c56fb3c83c02d66cbe7e618ed))
+* consolidated commands ([7eda737](https://github.com/marcobradley/golang-api-demo/commit/7eda737899eb20c2d84cebda7969c2d61f1178cb))
+* correcting build error ([0134984](https://github.com/marcobradley/golang-api-demo/commit/0134984ed758a322f724957fc272281f36e34b0f))
 * correcting release.yml ([59aaaa1](https://github.com/marcobradley/golang-api-demo/commit/59aaaa1c6684b878a9ede8adfe00f5a27e3f4dc1))
 * creating a user and group to run the api as a nonroot user ([8a616f5](https://github.com/marcobradley/golang-api-demo/commit/8a616f57734694ac49065760ffd8cf37ae74fd4f))
 * fixing release.yml ([b820cea](https://github.com/marcobradley/golang-api-demo/commit/b820cea666b68a9a7d01ff5d44aafa22c0fb42b3))
