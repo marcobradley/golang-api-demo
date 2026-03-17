@@ -13,11 +13,18 @@ COPY . .
 # Build the binary from the demo-api package by changing into that directory
 WORKDIR /app/demo-api
 RUN CGO_ENABLED=0 go build -o /app/out/api-server .
+RUN printf 'api:x:10001:10001:API User:/nonexistent:/sbin/nologin\n' > /app/out/passwd && \
+	printf 'api:x:10001:\n' > /app/out/group
 
 FROM scratch
 ENV GIN_MODE=release
 # Copy the compiled binary from the builder stage
 COPY --from=builder /app/out/api-server /
+COPY --from=builder /app/out/passwd /etc/passwd
+COPY --from=builder /app/out/group /etc/group
+
+# Run as a named, unprivileged user in the final image
+USER api:api
 
 # scratch has no certificates, but binary uses none
 EXPOSE 8080
