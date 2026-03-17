@@ -10,9 +10,10 @@ RUN go mod download
 # Copy the rest of the source code
 COPY . .
 
+RUN mkdir -p /app/out
+
 # Build the binary from the demo-api package by changing into that directory
 WORKDIR /app/demo-api
-RUN mkdir -p /app/out
 RUN CGO_ENABLED=0 go build -o /app/out/api-server .
 RUN printf 'api:x:10001:10001:API User:/nonexistent:/sbin/nologin\n' > /app/out/passwd
 RUN printf 'api:x:10001:\n' > /app/out/group
